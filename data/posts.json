@@ -1,0 +1,82 @@
+[
+  {
+    "id": "post_001",
+    "title": "The Secret Life of Red Foxes: Urban Adaptation",
+    "slug": "secret-life-red-foxes-urban-adaptation",
+    "body": "Red foxes (Vulpes vulpes) have remarkably adapted to urban environments...",
+    "target_category": "vulpine",
+    "target_subject": "red fox"
+  },
+  {
+    "id": "post_002",
+    "title": "Gray Wolf Pack Dynamics in Yellowstone",
+    "slug": "gray-wolf-pack-dynamics-yellowstone",
+    "body": "The reintroduction of gray wolves (Canis lupus) to Yellowstone...",
+    "target_category": "canid",
+    "target_subject": "gray wolf"
+  },
+  {
+    "id": "post_003",
+    "title": "Understanding Your Dog's Body Language",
+    "slug": "understanding-dog-body-language",
+    "body": "Dogs (Canis familiaris) communicate through a complex system of body signals...",
+    "target_category": "canid_dog",
+    "target_subject": "dog"
+  },
+  {
+    "id": "post_004",
+    "title": "Brown Bears: Preparing for Winter Hibernation",
+    "slug": "brown-bears-preparing-winter-hibernation",
+    "body": "As autumn approaches, brown bears (Ursus arctos) enter hyperphagia...",
+    "target_category": "ursid",
+    "target_subject": "brown bear"
+  },
+  {
+    "id": "post_005",
+    "title": "White-Tailed Deer: Seasonal Migration Patterns",
+    "slug": "white-tailed-deer-seasonal-migration",
+    "body": "White-tailed deer (Odocoileus virginianus) undertake seasonal migrations...",
+    "target_category": "cervid",
+    "target_subject": "white-tailed deer"
+  },
+  {
+    "id": "post_006",
+    "title": "Red Fox Hunting Techniques in Snow",
+    "slug": "red-fox-hunting-techniques-snow",
+    "body": "Red foxes exhibit remarkable hunting behavior in winter, using their acute hearing...",
+    "target_category": "vulpine",
+    "target_subject": "red fox"
+  },
+  {
+    "id": "post_007",
+    "title": "Wolf Conservation Success Stories",
+    "slug": "wolf-conservation-success-stories",
+    "body": "After decades of decline, gray wolf populations are recovering in several regions...",
+    "target_category": "canid",
+    "target_subject": "gray wolf"
+  },
+  {
+    "id": "post_008",
+    "title": "Best Dog Breeds for Apartment Living",
+    "slug": "best-dog-breeds-apartment-living",
+    "body": "Choosing the right dog breed for apartment life requires considering energy levels...",
+    "target_category": "canid_dog",
+    "target_subject": "dog"
+  },
+  {
+    "id": "post_009",
+    "title": "Bear Safety: What to Do When You Encounter One",
+    "slug": "bear-safety-encounter-guide",
+    "body": "Knowing how to react during a bear encounter can save lives. Brown bears...",
+    "target_category": "ursid",
+    "target_subject": "brown bear"
+  },
+  {
+    "id": "post_010",
+    "title": "Deer-Resistant Plants for Your Garden",
+    "slug": "deer-resistant-plants-garden",
+    "body": "Protecting your garden from white-tailed deer requires strategic planting...",
+    "target_category": "cervid",
+    "target_subject": "white-tailed deer"
+  }
+]
