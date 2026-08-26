@@ -2,6 +2,7 @@
 """
 Vision pipeline runner script.
 Processes all images in data/images/ through Gemini Flash vision model.
+Quota-aware: stops on 429, marks remaining as pending_quota, resumable next run.
 """
 
 import logging
@@ -49,32 +50,40 @@ def main() -> int:
             return 1
         logger.info(f"Found {count} images in database")
     
-    # Run batch processing
-    logger.info("Starting vision pipeline...")
-    stats = run_vision_batch(images_dir, max_workers=3)
+    # Run batch processing (sequential, quota-aware)
+    logger.info("Starting vision pipeline (sequential, quota-aware)...")
+    stats = run_vision_batch(images_dir, max_workers=1)
     
     # Print summary
     print("\n" + "=" * 60)
     print("VISION PIPELINE SUMMARY")
     print("=" * 60)
     print(f"Total images:          {stats.total}")
-    print(f"Processed:             {stats.processed}")
+    print(f"Processed this run:    {stats.processed}")
     print(f"Succeeded:             {stats.succeeded}")
     print(f"  - Needs review:      {stats.needs_review}")
     print(f"Failed (validation):   {stats.failed_validation}")
     print(f"Failed (transient):    {stats.failed_transient}")
+    print(f"Pending quota (next):  {stats.pending_quota}")
     print(f"Total estimated cost:  ${stats.total_cost_usd:.6f}")
     print("=" * 60)
     
     if stats.errors:
-        print("\nErrors:")
+        print("\nDetails:")
         for err in stats.errors:
             print(f"  - {err}")
     
-    # Exit with error code if any validation failures
+    # Exit codes:
+    # 0 = all succeeded (or quota exhausted but nothing else failed)
+    # 1 = validation or transient failures (real errors)
+    # 2 = quota exhausted (expected, run again tomorrow)
     if stats.failed_validation > 0 or stats.failed_transient > 0:
-        logger.warning("Some images failed processing")
+        logger.warning("Some images failed with real errors (validation/transient)")
         return 1
+    
+    if stats.pending_quota > 0:
+        logger.info("Quota exhausted - run again tomorrow to process remaining")
+        return 2
     
     return 0
 

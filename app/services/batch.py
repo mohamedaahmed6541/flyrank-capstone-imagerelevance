@@ -1,8 +1,7 @@
-"""Batch processor for vision pipeline using ThreadPoolExecutor."""
+"""Batch processor for vision pipeline with quota-aware sequential processing."""
 
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -12,7 +11,13 @@ from app.db.session import get_session
 from app.models.image import Image
 from app.models.api_call import ApiCall
 from app.schemas.vision import VisionResult, CONFIDENCE_FLOOR
-from app.services.vision import classify_image, TransientError, VisionError
+from app.services.vision import (
+    classify_image, 
+    TransientError, 
+    VisionError, 
+    QuotaExceededError,
+    ValidationError
+)
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -26,6 +31,7 @@ class ProcessingStats:
     succeeded: int = 0
     failed_validation: int = 0
     failed_transient: int = 0
+    pending_quota: int = 0
     needs_review: int = 0
     total_cost_usd: float = 0.0
     errors: list[str] = field(default_factory=list)
@@ -36,6 +42,7 @@ class ProcessingStats:
             f"(succeeded: {self.succeeded}, "
             f"validation_failed: {self.failed_validation}, "
             f"transient_failed: {self.failed_transient}, "
+            f"pending_quota: {self.pending_quota}, "
             f"needs_review: {self.needs_review}, "
             f"cost: ${self.total_cost_usd:.6f})"
         )
@@ -46,8 +53,6 @@ def estimate_cost(model: str, input_tokens: int | None, output_tokens: int | Non
     Estimate cost for Gemini Flash free tier.
     Free tier: $0.00 per request (but track anyway).
     """
-    # Gemini Flash free tier is $0, but we track for future paid tiers
-    # If paid: ~$0.075 per 1M input tokens, $0.30 per 1M output tokens
     if input_tokens is None or output_tokens is None:
         return 0.0
     input_cost = (input_tokens / 1_000_000) * 0.075
@@ -61,7 +66,8 @@ def process_image_with_retry(
     base_delay: float = 1.0,
 ) -> VisionResult:
     """
-    Process a single image with retry logic for transient errors.
+    Process a single image with retry logic for genuinely transient errors only.
+    Does NOT retry on quota errors (429) - those raise QuotaExceededError immediately.
     """
     last_error = None
     
@@ -77,14 +83,16 @@ def process_image_with_retry(
                 time.sleep(delay)
             else:
                 logger.error(f"All retries exhausted for {image_path.name}")
-                # Return a failed result instead of raising
                 return VisionResult(
                     filename=image_path.name,
                     metadata=None,
                     validation_status="failed",
                     error_message=f"Transient error after {max_retries} retries: {last_error}",
                 )
-        except VisionError as e:
+        except QuotaExceededError:
+            # Re-raise quota errors immediately - caller handles fail-fast
+            raise
+        except ValidationError as e:
             # Non-transient validation error - don't retry
             logger.error(f"Validation error for {image_path.name}: {e}")
             return VisionResult(
@@ -94,7 +102,6 @@ def process_image_with_retry(
                 error_message=str(e),
             )
     
-    # Should not reach here
     return VisionResult(
         filename=image_path.name,
         metadata=None,
@@ -103,16 +110,23 @@ def process_image_with_retry(
     )
 
 
+def is_image_already_processed(session, image_id: uuid.UUID) -> bool:
+    """Check if image already has a successful vision result."""
+    image = session.get(Image, image_id)
+    if not image:
+        return False
+    return image.validation_status in ("success", "partial")
+
+
 def save_vision_result(
     session,
     image_id: uuid.UUID,
     result: VisionResult,
-    model: str = "gemini-1.5-flash",
+    model: str = "gemini-flash-latest",
 ) -> None:
     """
     Save vision result to database (image + api_calls).
     """
-    # Update image record
     image = session.get(Image, image_id)
     if not image:
         logger.error(f"Image {image_id} not found in database")
@@ -130,92 +144,89 @@ def save_vision_result(
         image.validation_status = result.validation_status
         image.needs_review = True  # Default to review on failure
 
-    # Calculate cost
-    cost = 0.0  # We'll extract from usage if available
+    cost = 0.0
     
-    # Record API call
     api_call = ApiCall(
         image_id=image_id,
         model=model,
-        input_tokens=None,  # Would extract from usage metadata
+        input_tokens=None,
         output_tokens=None,
         estimated_cost_usd=cost,
-        status="success" if result.validation_status != "failed" else "failed",
+        status="success" if result.validation_status in ("success", "partial") else "failed",
         error_message=result.error_message,
     )
     session.add(api_call)
     session.commit()
-    
-    # Update cost tracking if we have usage data
-    # (In a real implementation, we'd pass usage from classify_image)
 
 
 def run_vision_batch(
     images_dir: Path,
-    max_workers: int = 3,
+    max_workers: int = 1,  # Sequential to respect quota and enable fail-fast
     progress_callback: Callable[[ProcessingStats], None] | None = None,
 ) -> ProcessingStats:
     """
     Run vision classification on all images in a directory.
-    Uses ThreadPoolExecutor for controlled concurrency.
+    Sequential processing with quota-aware fail-fast and resumability.
     """
     # Get all image files
     image_files = sorted(images_dir.glob("*.jpg")) + sorted(images_dir.glob("*.jpeg")) + sorted(images_dir.glob("*.png"))
     
     stats = ProcessingStats(total=len(image_files))
     
-    logger.info(f"Starting vision batch processing for {stats.total} images with {max_workers} workers")
+    logger.info(f"Starting vision batch processing for {stats.total} images (sequential, quota-aware)")
     
     # Get existing images from DB to match by filename
     with get_session() as session:
         existing_images = {img.filename: img.id for img in session.query(Image).all()}
     
-    # Process images in parallel
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all tasks
-        future_to_path = {
-            executor.submit(process_image_with_retry, img_path): img_path
-            for img_path in image_files
-        }
+    # Process images sequentially (quota-aware)
+    for img_path in image_files:
+        # Check if already successfully processed (resumable)
+        image_id = existing_images.get(img_path.name)
+        if image_id:
+            with get_session() as session:
+                if is_image_already_processed(session, image_id):
+                    logger.info(f"Skipping {img_path.name} - already processed successfully")
+                    continue
         
-        # Process completed tasks
-        for future in as_completed(future_to_path):
-            img_path = future_to_path[future]
-            stats.processed += 1
+        stats.processed += 1
+        
+        try:
+            result = process_image_with_retry(img_path)
             
-            try:
-                result = future.result()
-                
-                # Save to database
-                image_id = existing_images.get(img_path.name)
-                if image_id:
-                    with get_session() as session:
-                        save_vision_result(session, image_id, result)
-                else:
-                    logger.warning(f"No database record found for {img_path.name}")
-                
-                # Update stats
-                if result.validation_status == "success":
-                    stats.succeeded += 1
-                    if result.metadata and result.metadata.needs_review:
-                        stats.needs_review += 1
-                elif result.validation_status == "partial":
-                    stats.succeeded += 1
-                    if result.metadata and result.metadata.needs_review:
-                        stats.needs_review += 1
-                else:
-                    stats.failed_validation += 1
-                    stats.errors.append(f"{img_path.name}: {result.error_message}")
-                    
-            except Exception as e:
-                stats.failed_transient += 1
-                stats.errors.append(f"{img_path.name}: {e}")
-                logger.error(f"Unexpected error processing {img_path.name}: {e}")
-            
-            # Progress callback
-            if progress_callback:
-                progress_callback(stats)
+            # Save to database
+            if image_id:
+                with get_session() as session:
+                    save_vision_result(session, image_id, result)
             else:
-                stats.log_progress()
+                logger.warning(f"No database record found for {img_path.name}")
+            
+            # Update stats
+            if result.validation_status in ("success", "partial"):
+                stats.succeeded += 1
+                if result.metadata and result.metadata.needs_review:
+                    stats.needs_review += 1
+            else:
+                stats.failed_validation += 1
+                stats.errors.append(f"{img_path.name}: {result.error_message}")
+                
+        except QuotaExceededError as e:
+            # Quota exhausted - mark remaining images as pending_quota and STOP
+            logger.warning(f"Quota exceeded at {img_path.name}. Stopping batch. Remaining images will be pending_quota.")
+            stats.pending_quota = stats.total - stats.processed
+            stats.errors.append(f"{img_path.name}: QUOTA_EXCEEDED - {e}")
+            # Don't save this failed result; leave image as pending for next run
+            break
+            
+        except Exception as e:
+            stats.failed_transient += 1
+            stats.errors.append(f"{img_path.name}: {e}")
+            logger.error(f"Unexpected error processing {img_path.name}: {e}")
+        
+        # Progress callback
+        if progress_callback:
+            progress_callback(stats)
+        else:
+            stats.log_progress()
     
     return stats
