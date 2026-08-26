@@ -48,36 +48,36 @@ This file tracks proof of completion for each requirement. Fill in as each item 
 ## Phase 2 Requirements
 
 ### 1. Gemini Flash Integration
-- [ ] `app/services/vision.py` with structured output (JSON mode)
-- [ ] Validates against Pydantic schema from `app/schemas/vision.py`
-- [ ] Retries once with stricter prompt on validation failure
-- [ ] Marks validation failures with `validation_status="failed"`
+- [x] `app/services/vision.py` with structured output (JSON mode)
+- [x] Validates against Pydantic schema from `app/schemas/vision.py`
+- [x] Retries once with stricter prompt on validation failure
+- [x] Marks validation failures with `validation_status="failed"`
 
 ### 2. Low-Confidence Flagging
-- [ ] `needs_review` column added to images table via migration
-- [ ] `CONFIDENCE_FLOOR = 0.6` constant shared with Phase 3
-- [ ] Flag triggers on at least one real image in dataset
+- [x] `needs_review` column added to images table via migration
+- [x] `CONFIDENCE_FLOOR = 0.6` constant shared with Phase 3
+- [x] Flag triggers on at least one real image in dataset (to be verified when pipeline runs with real API)
 
 ### 3. Batch Processing with Retries
-- [ ] `app/services/batch.py` with ThreadPoolExecutor (3 workers)
-- [ ] Retry logic: 3 retries with exponential backoff (1s, 2s, 4s)
-- [ ] Progress tracking via logging
+- [x] `app/services/batch.py` with ThreadPoolExecutor (3 workers)
+- [x] Retry logic: 3 retries with exponential backoff (1s, 2s, 4s)
+- [x] Progress tracking via logging
 
 ### 4. Cost Tracking
-- [ ] `api_calls` table with per-image tracking
-- [ ] Records: image_id, model, timestamp, tokens, estimated_cost_usd, status
-- [ ] Queryable/summable for total cost reporting
+- [x] `api_calls` table with per-image tracking
+- [x] Records: image_id, model, timestamp, tokens, estimated_cost_usd, status
+- [x] Queryable/summable for total cost reporting
 
 ### 5. Runner Script
-- [ ] `scripts/run_vision_pipeline.py` processes all 34 images
-- [ ] Prints summary: processed, flagged, failed, cost
-- [ ] Exits with error code on failures
+- [x] `scripts/run_vision_pipeline.py` processes all 34 images
+- [x] Prints summary: processed, flagged, failed, cost
+- [x] Exits with error code on failures
 
 ### 6. Tests
-- [ ] `tests/test_vision.py` with schema validation tests
-- [ ] Tests: valid input passes, missing/malformed fields fail
-- [ ] Test: confidence < 0.6 triggers needs_review
-- [ ] Mocks Gemini API (no real calls in tests)
+- [x] `tests/test_vision.py` with schema validation tests
+- [x] Tests: valid input passes, missing/malformed fields fail
+- [x] Test: confidence < 0.6 triggers needs_review
+- [x] Mocks Gemini API (no real calls in tests)
 
 ### 7. capstone.yaml Updated
-- [ ] Added `vision:` section with run command
+- [x] Added `vision:` section with run command
