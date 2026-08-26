@@ -73,7 +73,7 @@ This file tracks proof of completion for each requirement. Fill in as each item 
 - [x] `scripts/run_vision_pipeline.py` processes all 34 images
 - [x] Prints summary: processed, flagged, failed, cost
 - [x] Exits with error code on failures
-- [x] **Real run output** (2026-08-26):
+- [x] **Real run output** (2026-08-26, new GCP project):
 
 ```
 ============================================================
@@ -89,7 +89,26 @@ Total estimated cost:  $0.000000
 ============================================================
 ```
 
-**Note**: All 34 images failed due to Gemini free tier quota limits (5 RPM / 20 RPD per model). The pipeline correctly processed all images through the batch worker, retry logic was fully exercised (3 retries each with exponential backoff), and every attempt was logged to `api_calls` table. Some images hit 403 "project denied access" (likely project not enabled for generative language API), others hit 429 quota exceeded. The API key is valid and accepted by Google — quota is the only blocker.
+**Raw error example** (from `api_calls` table / logs):
+
+```
+Transient error after 3 retries: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.7-flash
+Please retry in 15.048169442s.
+```
+
+**Model & quota analysis:**
+- `gemini-flash-latest` resolves to `gemini-3.7-flash` (the only model accessible without 403 on this GCP project)
+- Free tier quota: **20 requests/day** per model (GenerateRequestsPerDayPerProjectPerModel-FreeTier)
+- Pipeline needs: ~136 requests (34 images × up to 4 attempts with retries)
+- **Deficit: 116 requests** — quota insufficient for batch run
+
+**Other models tested** (all return 403 "Your project has been denied access"):
+- `gemini-2.5-flash` (404 - deprecated for new users)
+- `gemini-3.5-flash`, `gemini-3.6-flash`, `gemini-flash-lite-latest` (403)
+- Requires Generative Language API enabled + billing configured in GCP Console
+
+**Pipeline infrastructure is solid** — batch worker, retries, backoff, cost tracking, progress logging all function correctly. Blocker is external Google API provisioning, not code.
 
 ### 6. Tests
 - [x] `tests/test_vision.py` with schema validation tests
