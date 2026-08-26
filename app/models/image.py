@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import (
-    String, Text, Numeric, CheckConstraint, Index, ForeignKey, JSON, ARRAY, Float
+    String, Text, Numeric, CheckConstraint, Index, ForeignKey, JSON, ARRAY, Float, Boolean
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
@@ -27,6 +27,8 @@ class Image(Base):
         Numeric(3, 2), nullable=False
     )
     embedding: Mapped[List[float]] = mapped_column(ARRAY(Float), nullable=False)
+    needs_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    validation_status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     created_at: Mapped[datetime] = mapped_column(nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -39,8 +41,10 @@ class Image(Base):
 
     __table_args__ = (
         CheckConstraint("confidence >= 0 AND confidence <= 1", name="ck_images_confidence_range"),
+        CheckConstraint("validation_status IN ('pending', 'success', 'failed', 'partial')", name="ck_images_validation_status"),
         Index("ix_images_subject", "subject"),
         Index("ix_images_category", "category"),
+        Index("ix_images_needs_review", "needs_review"),
     )
 
 
