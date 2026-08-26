@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 CONFIDENCE_FLOOR = 0.6
 
+# Closed enum matching our 5 dataset categories
+ALLOWED_CATEGORIES = frozenset(["vulpine", "canid_wolf", "canid_dog", "ursid", "cervid"])
+
 
 class ImageMetadata(BaseModel):
     """
@@ -15,7 +18,7 @@ class ImageMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     subject: str = Field(..., min_length=1, max_length=100, description="Primary subject (e.g., 'red fox', 'gray wolf')")
-    category: str = Field(..., min_length=1, max_length=50, description="Broad category (e.g., 'canid', 'cervid', 'ursid')")
+    category: str = Field(..., description="Broad category from closed enum")
     attributes: List[str] = Field(default_factory=list, description="Visual attributes (e.g., ['red fur', 'bushy tail', 'pointed ears'])")
     caption: str = Field(..., min_length=10, max_length=500, description="Natural language description")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Model confidence in classification")
@@ -26,6 +29,14 @@ class ImageMetadata(BaseModel):
         if not v.strip():
             raise ValueError('Field cannot be empty or whitespace')
         return v.strip().lower()
+
+    @field_validator('category')
+    @classmethod
+    def validate_category(cls, v: str) -> str:
+        v_normalized = v.strip().lower()
+        if v_normalized not in ALLOWED_CATEGORIES:
+            raise ValueError(f'Category must be one of: {", ".join(sorted(ALLOWED_CATEGORIES))}')
+        return v_normalized
 
     @field_validator('attributes')
     @classmethod

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 VISION_PROMPT = """
 Analyze this image and return a JSON object with the following fields:
 - subject: Primary subject (e.g., "red fox", "gray wolf", "domestic dog", "brown bear", "white-tailed deer")
-- category: Broad taxonomic category (e.g., "vulpine", "canid", "ursid", "cervid")
+- category: MUST be exactly one of these 5 values: "vulpine", "canid_wolf", "canid_dog", "ursid", "cervid"
 - attributes: List of visual attributes (e.g., ["red fur", "bushy tail", "pointed ears", "snow background"])
 - caption: Natural language description (1-2 sentences, minimum 10 characters)
 - confidence: Your confidence in this classification (0.0 to 1.0)
@@ -31,7 +31,7 @@ STRICTER_PROMPT = VISION_PROMPT + """
 
 IMPORTANT: The response MUST be valid JSON with EXACTLY these 5 fields.
 - subject: string (1-100 chars)
-- category: string (1-50 chars)
+- category: string - MUST be exactly one of: vulpine, canid_wolf, canid_dog, ursid, cervid
 - attributes: array of strings
 - caption: string (10-500 chars)
 - confidence: number (0.0-1.0)

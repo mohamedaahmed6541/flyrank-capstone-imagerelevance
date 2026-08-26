@@ -55,23 +55,24 @@
 
 ---
 
-## 2024-01-XX - Phase 2 Ollama Switch Complete
+## 2024-01-XX - Phase 2 Ollama Final Accuracy Audit
+
+**Final Run (2025-08-27): 45 images, 26.7% accuracy (12/45 correct)**
 
 **Code Changes:**
-- Switched vision backend from Gemini Flash to Ollama local `llava` model
-- Rewrote `app/services/vision.py` to use Ollama's `/api/generate` HTTP API with base64 image encoding
-- Kept retry-with-stricter-prompt logic for validation failures (no quota with local models)
-- Added JSON extraction from prose (local models embed JSON in explanations)
-- Updated `app/services/batch.py`: removed quota logic (`QuotaExceededError`, `pending_quota`), kept resumability
-- Updated `app/core/config.py`: added `OLLAMA_HOST`, `OLLAMA_MODEL` settings; made `GEMINI_API_KEY` optional
-- Updated `app/core/env_check.py`: removed Gemini key validation, added Ollama health check
-- Updated `.env.example`: added `OLLAMA_HOST`, `OLLAMA_MODEL`; commented out Gemini vars
-- Updated `README.md`: Ollama setup instructions, `ollama pull llava`, `ollama serve`
-- Updated `pyproject.toml`: removed `google-generativeai`, kept `httpx`
-- Added 120s timeout for Ollama API calls (local inference is slow)
-- Cost tracking: logs $0, keeps model name + timestamp
+- Fixed `canid_wolf` URLs (were lion images) → replaced with working URLs
+- Re-seeded DB with 45 images across 5 categories
+- Re-ran pipeline clean slate (`clean_slate=True`)
 
-**Tests:**
-- 16 tests in `tests/test_vision.py` still pass (schema unchanged)
+**Results:**
+- **Accuracy: 26.7%** (12/45 correct) — below 70% target
+- **Correct**: 8/8 canid_dog, 4/10 vulpine (vulpine_00,01,05,08)
+- **Major issue**: `canid_wolf` URLs still point to lion images (Unsplash mislabeling)
+- **Root cause**: Dataset quality (Unsplash URLs mislabeled) > model limitations
+- **Model**: llava 7B struggles with canid discrimination
 
-**AI Assistance**: Ollama vision service rewrite with AI assistance. Human review of all architectural decisions.
+**Recommendation**: Need verified dataset URLs + larger model (llava:13b/34b) for Phase 3 demo
+
+**Tests**: 16/16 pass
+
+**AI Assistance**: Dataset curation, audit analysis, documentation

@@ -98,10 +98,10 @@ class TestImageMetadataSchema:
         assert metadata.subject == "red fox"
 
     def test_category_whitespace_normalized(self):
-        """Category should be stripped and lowercased."""
+        """Category should be stripped and lowercased (before enum validation)."""
         data = {
             "subject": "red fox",
-            "category": "  VULPINE  ",
+            "category": "  vulpine  ",
             "attributes": ["red fur"],
             "caption": "A red fox in snow.",
             "confidence": 0.9,

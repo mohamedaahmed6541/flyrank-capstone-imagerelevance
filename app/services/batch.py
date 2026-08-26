@@ -152,18 +152,19 @@ def run_vision_batch(
     images_dir: Path,
     max_workers: int = 1,  # Sequential for local inference
     progress_callback: Callable[[ProcessingStats], None] | None = None,
+    clean_slate: bool = True,  # Process all images regardless of previous state
 ) -> ProcessingStats:
     """
     Run vision classification on all images in a directory.
     Sequential processing with local Ollama (no quota limits).
-    Resumable: skips already-processed images.
+    If clean_slate=True, processes ALL images regardless of previous state.
     """
     # Get all image files
     image_files = sorted(images_dir.glob("*.jpg")) + sorted(images_dir.glob("*.jpeg")) + sorted(images_dir.glob("*.png"))
     
     stats = ProcessingStats(total=len(image_files))
     
-    logger.info(f"Starting vision batch processing for {stats.total} images (sequential, local Ollama)")
+    logger.info(f"Starting vision batch processing for {stats.total} images (sequential, local Ollama, clean_slate={clean_slate})")
     
     # Get existing images from DB to match by filename
     with get_session() as session:
@@ -171,9 +172,10 @@ def run_vision_batch(
     
     # Process images sequentially (local inference)
     for img_path in image_files:
-        # Check if already successfully processed (resumable)
         image_id = existing_images.get(img_path.name)
-        if image_id:
+        
+        # Skip if already processed successfully (unless clean_slate)
+        if image_id and not clean_slate:
             with get_session() as session:
                 if is_image_already_processed(session, image_id):
                     logger.info(f"Skipping {img_path.name} - already processed successfully")

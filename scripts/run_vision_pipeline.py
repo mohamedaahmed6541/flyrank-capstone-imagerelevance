@@ -56,8 +56,8 @@ def main() -> int:
         logger.info(f"Found {count} images in database")
     
     # Run batch processing (sequential, local Ollama)
-    logger.info("Starting vision pipeline (local Ollama, no quota)...")
-    stats = run_vision_batch(images_dir, max_workers=1)
+    logger.info("Starting vision pipeline (local Ollama, no quota, clean slate)...")
+    stats = run_vision_batch(images_dir, max_workers=1, clean_slate=True)
     
     # Print summary
     print("\n" + "=" * 60)
