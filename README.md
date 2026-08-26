@@ -2,14 +2,14 @@
 
 ## What it does
 
-This system classifies images with a vision model (Gemini Flash), embeds images and blog posts into a shared vector space, ranks candidate images per post, and runs every ranked candidate through a "mismatch guard" — a safety layer that rejects wrong pairings (e.g. a wolf photo for a fox post) with a human-readable explanation. If nothing clears the bar, it returns "no confident match" with reasons instead of guessing.
+This system classifies images with a vision model (Ollama llava), embeds images and blog posts into a shared vector space, ranks candidate images per post, and runs every ranked candidate through a "mismatch guard" — a safety layer that rejects wrong pairings (e.g. a wolf photo for a fox post) with a human-readable explanation. If nothing clears the bar, it returns "no confident match" with reasons instead of guessing.
 
 ## Architecture
 
 *Diagram TBD*
 
 Components:
-- **Vision Pipeline**: Gemini Flash free tier for image classification and captioning
+- **Vision Pipeline**: Ollama local `llava` model for image classification and captioning (no quota, no API key)
 - **Embedding Engine**: Shared vector space for images and blog posts
 - **Matching Service**: Cosine similarity ranking with pgvector-ready design
 - **Mismatch Guard**: Tag validation + similarity threshold + confidence floor
@@ -31,7 +31,11 @@ pip install -e ".[dev]"
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your GEMINI_API_KEY and DATABASE_URL
+# Edit .env with your OLLAMA_HOST and OLLAMA_MODEL (defaults work for local Ollama)
+
+# Ensure Ollama is running with llava model
+ollama pull llava
+ollama serve
 
 # Start PostgreSQL (Docker)
 docker compose up -d
@@ -42,6 +46,9 @@ alembic upgrade head
 # Seed database
 python scripts/seed.py
 
+# Run vision pipeline (local, no quota limits)
+python scripts/run_vision_pipeline.py
+
 # Run API server
 uvicorn app.main:app --reload
 ```
@@ -50,11 +57,12 @@ uvicorn app.main:app --reload
 
 1. Run `scripts/fetch_dataset.py` to download ~40-50 free-license images
 2. Run `scripts/seed.py` to populate database with images, tags, posts, and eval set
-3. Verify with `GET /health` and `GET /images`
+3. Run `scripts/run_vision_pipeline.py` to classify all images with local Ollama
+4. Verify with `GET /health` and `GET /images`
 
 ## Limitations
 
-- Uses Gemini Flash free tier (rate limits apply)
+- Uses Ollama local `llava` model (no rate limits, no API key required)
 - No pgvector extension initially (~50 images, in-Postgres array storage)
 - API-only review interface (no frontend UI)
 - Single-user design (no auth/tenancy)

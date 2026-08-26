@@ -1,7 +1,6 @@
-"""Batch processor for vision pipeline with quota-aware sequential processing."""
+"""Batch processor for vision pipeline with Ollama (local, no quota)."""
 
 import logging
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -15,8 +14,8 @@ from app.services.vision import (
     classify_image, 
     TransientError, 
     VisionError, 
-    QuotaExceededError,
-    ValidationError
+    ValidationError,
+    ModelNotFoundError
 )
 import uuid
 
@@ -31,7 +30,7 @@ class ProcessingStats:
     succeeded: int = 0
     failed_validation: int = 0
     failed_transient: int = 0
-    pending_quota: int = 0
+    failed_model_not_found: int = 0
     needs_review: int = 0
     total_cost_usd: float = 0.0
     errors: list[str] = field(default_factory=list)
@@ -42,72 +41,10 @@ class ProcessingStats:
             f"(succeeded: {self.succeeded}, "
             f"validation_failed: {self.failed_validation}, "
             f"transient_failed: {self.failed_transient}, "
-            f"pending_quota: {self.pending_quota}, "
+            f"model_not_found: {self.failed_model_not_found}, "
             f"needs_review: {self.needs_review}, "
             f"cost: ${self.total_cost_usd:.6f})"
         )
-
-
-def estimate_cost(model: str, input_tokens: int | None, output_tokens: int | None) -> float:
-    """
-    Estimate cost for Gemini Flash free tier.
-    Free tier: $0.00 per request (but track anyway).
-    """
-    if input_tokens is None or output_tokens is None:
-        return 0.0
-    input_cost = (input_tokens / 1_000_000) * 0.075
-    output_cost = (output_tokens / 1_000_000) * 0.30
-    return input_cost + output_cost
-
-
-def process_image_with_retry(
-    image_path: Path,
-    max_retries: int = 3,
-    base_delay: float = 1.0,
-) -> VisionResult:
-    """
-    Process a single image with retry logic for genuinely transient errors only.
-    Does NOT retry on quota errors (429) - those raise QuotaExceededError immediately.
-    """
-    last_error = None
-    
-    for attempt in range(max_retries):
-        try:
-            result = classify_image(image_path)
-            return result
-        except TransientError as e:
-            last_error = e
-            if attempt < max_retries - 1:
-                delay = base_delay * (2 ** attempt)  # exponential backoff: 1s, 2s, 4s
-                logger.warning(f"Transient error for {image_path.name} (attempt {attempt + 1}/{max_retries}): {e}. Retrying in {delay}s...")
-                time.sleep(delay)
-            else:
-                logger.error(f"All retries exhausted for {image_path.name}")
-                return VisionResult(
-                    filename=image_path.name,
-                    metadata=None,
-                    validation_status="failed",
-                    error_message=f"Transient error after {max_retries} retries: {last_error}",
-                )
-        except QuotaExceededError:
-            # Re-raise quota errors immediately - caller handles fail-fast
-            raise
-        except ValidationError as e:
-            # Non-transient validation error - don't retry
-            logger.error(f"Validation error for {image_path.name}: {e}")
-            return VisionResult(
-                filename=image_path.name,
-                metadata=None,
-                validation_status="failed",
-                error_message=str(e),
-            )
-    
-    return VisionResult(
-        filename=image_path.name,
-        metadata=None,
-        validation_status="failed",
-        error_message="Unknown error",
-    )
 
 
 def is_image_already_processed(session, image_id: uuid.UUID) -> bool:
@@ -122,7 +59,7 @@ def save_vision_result(
     session,
     image_id: uuid.UUID,
     result: VisionResult,
-    model: str = "gemini-flash-latest",
+    model: str = "llava",
 ) -> None:
     """
     Save vision result to database (image + api_calls).
@@ -159,27 +96,80 @@ def save_vision_result(
     session.commit()
 
 
+def process_image_with_retry(
+    image_path: Path,
+    max_retries: int = 3,
+    base_delay: float = 1.0,
+) -> VisionResult:
+    """
+    Process a single image with retry logic for transient errors only.
+    Does NOT retry on validation errors (handled by classify_image internally).
+    Does NOT retry on ModelNotFoundError.
+    """
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            result = classify_image(image_path)
+            return result
+        except TransientError as e:
+            last_error = e
+            if attempt < max_retries - 1:
+                delay = base_delay * (2 ** attempt)  # exponential backoff: 1s, 2s, 4s
+                logger.warning(f"Transient error for {image_path.name} (attempt {attempt + 1}/{max_retries}): {e}. Retrying in {delay}s...")
+                import time
+                time.sleep(delay)
+            else:
+                logger.error(f"All retries exhausted for {image_path.name}")
+                return VisionResult(
+                    filename=image_path.name,
+                    metadata=None,
+                    validation_status="failed",
+                    error_message=f"Transient error after {max_retries} retries: {last_error}",
+                )
+        except ModelNotFoundError:
+            # Re-raise model not found - not retryable
+            raise
+        except ValidationError as e:
+            # Validation error - classify_image already handled retry internally
+            logger.error(f"Validation error for {image_path.name}: {e}")
+            return VisionResult(
+                filename=image_path.name,
+                metadata=None,
+                validation_status="failed",
+                error_message=str(e),
+            )
+    
+    return VisionResult(
+        filename=image_path.name,
+        metadata=None,
+        validation_status="failed",
+        error_message="Unknown error",
+    )
+
+
 def run_vision_batch(
     images_dir: Path,
-    max_workers: int = 1,  # Sequential to respect quota and enable fail-fast
+    max_workers: int = 1,  # Sequential for local inference
     progress_callback: Callable[[ProcessingStats], None] | None = None,
 ) -> ProcessingStats:
     """
     Run vision classification on all images in a directory.
-    Sequential processing with quota-aware fail-fast and resumability.
+    Sequential processing with local Ollama (no quota limits).
+    Resumable: skips already-processed images.
     """
     # Get all image files
     image_files = sorted(images_dir.glob("*.jpg")) + sorted(images_dir.glob("*.jpeg")) + sorted(images_dir.glob("*.png"))
     
     stats = ProcessingStats(total=len(image_files))
     
-    logger.info(f"Starting vision batch processing for {stats.total} images (sequential, quota-aware)")
+    logger.info(f"Starting vision batch processing for {stats.total} images (sequential, local Ollama)")
     
     # Get existing images from DB to match by filename
     with get_session() as session:
         existing_images = {img.filename: img.id for img in session.query(Image).all()}
     
-    # Process images sequentially (quota-aware)
+    # Process images sequentially (local inference)
     for img_path in image_files:
         # Check if already successfully processed (resumable)
         image_id = existing_images.get(img_path.name)
@@ -210,12 +200,11 @@ def run_vision_batch(
                 stats.failed_validation += 1
                 stats.errors.append(f"{img_path.name}: {result.error_message}")
                 
-        except QuotaExceededError as e:
-            # Quota exhausted - mark remaining images as pending_quota and STOP
-            logger.warning(f"Quota exceeded at {img_path.name}. Stopping batch. Remaining images will be pending_quota.")
-            stats.pending_quota = stats.total - stats.processed
-            stats.errors.append(f"{img_path.name}: QUOTA_EXCEEDED - {e}")
-            # Don't save this failed result; leave image as pending for next run
+        except ModelNotFoundError as e:
+            # Model not found - stop processing
+            logger.error(f"Model not found: {e}. Stopping batch.")
+            stats.failed_model_not_found = stats.total - stats.processed
+            stats.errors.append(f"{img_path.name}: MODEL_NOT_FOUND - {e}")
             break
             
         except Exception as e:

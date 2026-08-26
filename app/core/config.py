@@ -3,7 +3,22 @@ from pydantic import Field
 
 
 class Settings(BaseSettings):
-    GEMINI_API_KEY: str = Field(..., description="Google AI Studio API key for Gemini Flash")
+    # Ollama (primary vision model)
+    OLLAMA_HOST: str = Field(
+        default="http://localhost:11434",
+        description="Ollama API base URL"
+    )
+    OLLAMA_MODEL: str = Field(
+        default="llava",
+        description="Ollama vision model name"
+    )
+
+    # Google AI Studio API Key (optional fallback)
+    GEMINI_API_KEY: str | None = Field(
+        default=None,
+        description="Google AI Studio API key for Gemini Flash (optional)"
+    )
+
     DATABASE_URL: str = Field(
         default="postgresql+asyncpg://postgres:postgres@localhost:5432/flyrank",
         description="PostgreSQL connection URL"

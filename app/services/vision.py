@@ -1,21 +1,19 @@
-"""Vision service using Gemini Flash for image classification."""
+"""Vision service using Ollama (local, no quota) for image classification."""
 
+import base64
 import json
 import logging
 import re
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
-import google.generativeai as genai
+import httpx
 from PIL import Image as PILImage
 
 from app.core.config import settings
 from app.schemas.vision import ImageMetadata, VisionResult, CONFIDENCE_FLOOR
 
 logger = logging.getLogger(__name__)
-
-# Configure Gemini
-genai.configure(api_key=settings.GEMINI_API_KEY)
 
 # Prompt for structured output
 VISION_PROMPT = """
@@ -60,18 +58,28 @@ class ValidationError(VisionError):
 
 
 class TransientError(VisionError):
-    """Raised for transient errors (network issues, 5xx, timeouts)."""
+    """Raised for transient errors (network issues, timeouts)."""
     pass
 
 
-class QuotaExceededError(VisionError):
-    """Raised when API quota is exceeded (429). Do not retry."""
+class ModelNotFoundError(VisionError):
+    """Raised when the model is not found (404)."""
     pass
 
 
 def _extract_json_from_response(response_text: str) -> dict:
-    """Extract JSON from response, handling markdown code blocks."""
+    """
+    Extract JSON from response, handling markdown code blocks and prose.
+    Local models often embed JSON in explanatory text.
+    """
     text = response_text.strip()
+    
+    # Try direct JSON first
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    
     # Remove markdown code blocks if present
     if text.startswith("```json"):
         text = text[7:]
@@ -79,79 +87,98 @@ def _extract_json_from_response(response_text: str) -> dict:
         text = text[3:]
     if text.endswith("```"):
         text = text[:-3]
-    return json.loads(text.strip())
+    text = text.strip()
+    
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    
+    # Find first {...} block in prose (common with local models)
+    json_match = re.search(r'\{.*\}', text, re.DOTALL)
+    if json_match:
+        try:
+            return json.loads(json_match.group())
+        except json.JSONDecodeError:
+            pass
+    
+    # If all else fails, raise the original error
+    raise json.JSONDecodeError(f"Could not extract valid JSON from: {text[:200]}...", text, 0)
 
 
-def _is_quota_error(error: Exception) -> bool:
-    """Check if an exception is a quota exceeded (429) error."""
-    error_str = str(error)
-    # Check for 429 status code or quota exceeded message
-    return (
-        "429" in error_str 
-        or "quota" in error_str.lower() 
-        or "rate limit" in error_str.lower()
-        or "generate_content_free_tier_requests" in error_str
-    )
+def _encode_image_to_base64(image_path: Path) -> str:
+    """Encode image file to base64 string."""
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
 
 
-def _is_permission_error(error: Exception) -> bool:
-    """Check if an exception is a permission denied (403) error."""
-    error_str = str(error)
-    return (
-        "403" in error_str
-        or "permission" in error_str.lower()
-        or "denied access" in error_str.lower()
-    )
-
-
-def _is_transient_error(error: Exception) -> bool:
-    """Check if an exception is a genuinely transient error worth retrying."""
-    # Network errors, timeouts, 5xx server errors
-    error_str = str(error).lower()
-    transient_patterns = [
-        "timeout",
-        "connection",
-        "network",
-        "dns",
-        "socket",
-        "500",
-        "502",
-        "503",
-        "504",
-        "unavailable",
-        "internal error",
-    ]
-    return any(pattern in error_str for pattern in transient_patterns)
-
-
-def _call_gemini_vision(image_path: Path, prompt: str) -> tuple[str, dict]:
+def _call_ollama_vision(image_path: Path, prompt: str) -> tuple[str, dict]:
     """
-    Call Gemini Flash with an image and prompt.
+    Call Ollama's /api/generate endpoint with an image and prompt.
     Returns (raw_response_text, usage_metadata_dict).
     """
-    model = genai.GenerativeModel("gemini-flash-latest")
+    # Encode image to base64
+    image_b64 = _encode_image_to_base64(image_path)
     
-    # Load image
-    pil_image = PILImage.open(image_path)
-    
-    # Generate content
-    response = model.generate_content(
-        [prompt, pil_image],
-        generation_config=genai.types.GenerationConfig(
-            response_mime_type="application/json",
-            temperature=0.1,
-        ),
-    )
-    
-    # Extract usage metadata if available
-    usage = {}
-    if hasattr(response, 'usage_metadata') and response.usage_metadata:
-        usage = {
-            "input_tokens": getattr(response.usage_metadata, 'prompt_token_count', None),
-            "output_tokens": getattr(response.usage_metadata, 'candidates_token_count', None),
+    payload = {
+        "model": settings.OLLAMA_MODEL,
+        "prompt": prompt,
+        "images": [image_b64],
+        "stream": False,
+        "format": "json",
+        "options": {
+            "temperature": 0.1,
         }
+    }
     
-    return response.text, usage
+    # Use generous timeout for local inference
+    timeout = httpx.Timeout(120.0, connect=10.0)
+    
+    with httpx.Client(timeout=timeout) as client:
+        try:
+            response = client.post(
+                f"{settings.OLLAMA_HOST}/api/generate",
+                json=payload,
+            )
+            
+            if response.status_code == 404:
+                raise ModelNotFoundError(
+                    f"Model '{settings.OLLAMA_MODEL}' not found. "
+                    f"Run: ollama pull {settings.OLLAMA_MODEL}"
+                )
+            
+            response.raise_for_status()
+            data = response.json()
+            
+            # Ollama returns: {"response": "...", "done": true, ...}
+            response_text = data.get("response", "")
+            
+            # Extract usage metadata if available
+            usage = {}
+            if "eval_count" in data:
+                usage = {
+                    "input_tokens": data.get("prompt_eval_count"),
+                    "output_tokens": data.get("eval_count"),
+                }
+            
+            return response_text, usage
+            
+        except httpx.ConnectError as e:
+            raise TransientError(f"Cannot connect to Ollama at {settings.OLLAMA_HOST}: {e}") from e
+        except httpx.TimeoutException as e:
+            raise TransientError(f"Ollama request timed out: {e}") from e
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                raise ModelNotFoundError(
+                    f"Model '{settings.OLLAMA_MODEL}' not found. "
+                    f"Run: ollama pull {settings.OLLAMA_MODEL}"
+                ) from e
+            elif e.response.status_code >= 500:
+                raise TransientError(f"Ollama server error: {e}") from e
+            else:
+                raise VisionError(f"Ollama API error: {e}") from e
+        except httpx.RequestError as e:
+            raise TransientError(f"Ollama request failed: {e}") from e
 
 
 def _classify_with_prompt(image_path: Path, prompt: str) -> VisionResult:
@@ -159,7 +186,7 @@ def _classify_with_prompt(image_path: Path, prompt: str) -> VisionResult:
     filename = image_path.name
     
     try:
-        raw_response, usage = _call_gemini_vision(image_path, prompt)
+        raw_response, usage = _call_ollama_vision(image_path, prompt)
         parsed = _extract_json_from_response(raw_response)
         metadata = ImageMetadata(**parsed)
         return VisionResult(
@@ -170,26 +197,23 @@ def _classify_with_prompt(image_path: Path, prompt: str) -> VisionResult:
         )
     except (json.JSONDecodeError, ValidationError, ValueError) as e:
         raise ValidationError(str(e)) from e
+    except ModelNotFoundError:
+        # Re-raise model not found - not retryable
+        raise
+    except TransientError:
+        # Re-raise transient errors
+        raise
     except Exception as e:
-        # Classify the error type
-        if _is_quota_error(e):
-            raise QuotaExceededError(str(e)) from e
-        elif _is_permission_error(e):
-            # 403 is not retryable - it's a config issue
-            raise ValidationError(f"Permission denied: {e}") from e
-        elif _is_transient_error(e):
-            raise TransientError(str(e)) from e
-        else:
-            # Unknown error - treat as validation failure
-            logger.warning(f"Unknown error for {filename}, treating as validation failure: {e}")
-            raise ValidationError(str(e)) from e
+        # Unknown error - treat as validation failure
+        logger.warning(f"Unknown error for {filename}, treating as validation failure: {e}")
+        raise ValidationError(str(e)) from e
 
 
 def classify_image(image_path: Path) -> VisionResult:
     """
-    Classify a single image using Gemini Flash.
+    Classify a single image using Ollama (local llava).
     Retries once with stricter prompt on validation failure.
-    Does NOT retry on quota exceeded (429) - raises QuotaExceededError.
+    Does NOT retry on transient errors (handled by batch layer).
     """
     filename = image_path.name
     
@@ -212,8 +236,8 @@ def classify_image(image_path: Path) -> VisionResult:
                 validation_status="failed",
                 error_message=str(e2),
             )
-    except QuotaExceededError:
-        # Re-raise quota errors immediately - don't retry
+    except ModelNotFoundError:
+        # Re-raise model not found - not retryable
         raise
     except TransientError:
         # Re-raise transient errors

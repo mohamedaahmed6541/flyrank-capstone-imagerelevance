@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Vision pipeline runner script.
-Processes all images in data/images/ through Gemini Flash vision model.
-Quota-aware: stops on 429, marks remaining as pending_quota, resumable next run.
+Processes all images in data/images/ through Ollama (local llava).
+No quota limits - runs all images. Resumable across runs.
 """
 
 import logging
@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-from app.core.env_check import ensure_env_file
+from app.core.env_check import ensure_env_file, check_ollama_health
 from app.core.config import settings
 from app.db.session import get_session
 from app.models.image import Image
@@ -33,8 +33,13 @@ logger = logging.getLogger(__name__)
 
 def main() -> int:
     """Main entry point."""
-    # Ensure .env exists and has valid API key
+    # Ensure .env exists
     ensure_env_file()
+    
+    # Check Ollama health
+    if not check_ollama_health():
+        logger.error("Ollama health check failed. Exiting.")
+        return 1
     
     # Get images directory
     images_dir = Path(__file__).parent.parent / "data" / "images"
@@ -50,13 +55,13 @@ def main() -> int:
             return 1
         logger.info(f"Found {count} images in database")
     
-    # Run batch processing (sequential, quota-aware)
-    logger.info("Starting vision pipeline (sequential, quota-aware)...")
+    # Run batch processing (sequential, local Ollama)
+    logger.info("Starting vision pipeline (local Ollama, no quota)...")
     stats = run_vision_batch(images_dir, max_workers=1)
     
     # Print summary
     print("\n" + "=" * 60)
-    print("VISION PIPELINE SUMMARY")
+    print("VISION PIPELINE SUMMARY (Ollama local)")
     print("=" * 60)
     print(f"Total images:          {stats.total}")
     print(f"Processed this run:    {stats.processed}")
@@ -64,7 +69,7 @@ def main() -> int:
     print(f"  - Needs review:      {stats.needs_review}")
     print(f"Failed (validation):   {stats.failed_validation}")
     print(f"Failed (transient):    {stats.failed_transient}")
-    print(f"Pending quota (next):  {stats.pending_quota}")
+    print(f"Failed (model missing): {stats.failed_model_not_found}")
     print(f"Total estimated cost:  ${stats.total_cost_usd:.6f}")
     print("=" * 60)
     
@@ -74,16 +79,16 @@ def main() -> int:
             print(f"  - {err}")
     
     # Exit codes:
-    # 0 = all succeeded (or quota exhausted but nothing else failed)
-    # 1 = validation or transient failures (real errors)
-    # 2 = quota exhausted (expected, run again tomorrow)
-    if stats.failed_validation > 0 or stats.failed_transient > 0:
-        logger.warning("Some images failed with real errors (validation/transient)")
-        return 1
-    
-    if stats.pending_quota > 0:
-        logger.info("Quota exhausted - run again tomorrow to process remaining")
+    # 0 = all succeeded
+    # 1 = some failed (validation/transient)
+    # 2 = model not found
+    if stats.failed_model_not_found > 0:
+        logger.error("Model not found - ensure Ollama has the model pulled")
         return 2
+    
+    if stats.failed_validation > 0 or stats.failed_transient > 0:
+        logger.warning("Some images failed processing")
+        return 1
     
     return 0
 
