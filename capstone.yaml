@@ -9,6 +9,10 @@ seed:
   command: "python scripts/seed.py"
   description: "Populate database with images, tags, posts, and eval set"
 
+vision:
+  command: "python scripts/run_vision_pipeline.py"
+  description: "Run Gemini Flash vision classification on all images"
+
 test:
   command: "pytest -v"
   coverage: "pytest --cov=app --cov-report=term-missing"
