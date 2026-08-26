@@ -12,8 +12,9 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Set dummy API key to allow config import, then validate
-os.environ.setdefault("GEMINI_API_KEY", "dummy-key-for-import")
+# Load .env FIRST, before any config imports
+from dotenv import load_dotenv
+load_dotenv()
 
 from app.core.env_check import ensure_env_file
 from app.core.config import settings
