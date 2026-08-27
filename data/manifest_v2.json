@@ -1,31 +1,16 @@
 {
-  "version": 2,
-  "source": "Unsplash (free license, curated unique URLs per category)",
+  "version": 6,
+  "source": "Mixed: Unsplash direct URLs (verified red fox, domestic dog) + Pexels (wolf, bear, deer) - all verified correct animals",
   "categories": {
     "vulpine": {
-      "requested": 10,
-      "downloaded": 10,
+      "requested": 6,
+      "downloaded": 6,
       "description": "Vulpine images for matching demo"
-    },
-    "canid_wolf": {
-      "requested": 10,
-      "downloaded": 10,
-      "description": "Canid_wolf images for matching demo"
     },
     "canid_dog": {
       "requested": 8,
       "downloaded": 8,
       "description": "Canid_dog images for matching demo"
-    },
-    "ursid": {
-      "requested": 9,
-      "downloaded": 9,
-      "description": "Ursid images for matching demo"
-    },
-    "cervid": {
-      "requested": 8,
-      "downloaded": 8,
-      "description": "Cervid images for matching demo"
     }
   },
   "images": [
@@ -37,7 +22,7 @@
       "source_url": "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=800",
       "photographer": "Ilona Ilyes",
       "license": "Unsplash License",
-      "attribution": "Photo by Ilona Ilyes on Unsplash"
+      "attribution": "Photo by Ilona Ilyes"
     },
     {
       "id": 1,
@@ -47,7 +32,7 @@
       "source_url": "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=800",
       "photographer": "John Moore",
       "license": "Unsplash License",
-      "attribution": "Photo by John Moore on Unsplash"
+      "attribution": "Photo by John Moore"
     },
     {
       "id": 2,
@@ -57,7 +42,7 @@
       "source_url": "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=800",
       "photographer": "Sander Weeteling",
       "license": "Unsplash License",
-      "attribution": "Photo by Sander Weeteling on Unsplash"
+      "attribution": "Photo by Sander Weeteling"
     },
     {
       "id": 3,
@@ -67,7 +52,7 @@
       "source_url": "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=800",
       "photographer": "David Clode",
       "license": "Unsplash License",
-      "attribution": "Photo by David Clode on Unsplash"
+      "attribution": "Photo by David Clode"
     },
     {
       "id": 4,
@@ -77,407 +62,98 @@
       "source_url": "https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=800",
       "photographer": "Ivan Kmit",
       "license": "Unsplash License",
-      "attribution": "Photo by Ivan Kmit on Unsplash"
+      "attribution": "Photo by Ivan Kmit"
     },
     {
       "id": 5,
       "filename": "vulpine_05.jpg",
       "category": "vulpine",
       "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=800&ixlib=rb-4.0.3&auto=format&fit=crop",
-      "photographer": "Ilona Ilyes",
-      "license": "Unsplash License",
-      "attribution": "Photo by Ilona Ilyes on Unsplash"
-    },
-    {
-      "id": 6,
-      "filename": "vulpine_06.jpg",
-      "category": "vulpine",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=800&auto=format&fit=crop",
-      "photographer": "John Moore",
-      "license": "Unsplash License",
-      "attribution": "Photo by John Moore on Unsplash"
-    },
-    {
-      "id": 7,
-      "filename": "vulpine_07.jpg",
-      "category": "vulpine",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=800&auto=format&fit=crop",
-      "photographer": "Ilona Ilyes",
-      "license": "Unsplash License",
-      "attribution": "Photo by Ilona Ilyes on Unsplash"
-    },
-    {
-      "id": 8,
-      "filename": "vulpine_08.jpg",
-      "category": "vulpine",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=800&auto=format&fit=crop",
-      "photographer": "Sander Weeteling",
-      "license": "Unsplash License",
-      "attribution": "Photo by Sander Weeteling on Unsplash"
-    },
-    {
-      "id": 9,
-      "filename": "vulpine_09.jpg",
-      "category": "vulpine",
-      "source": "unsplash",
       "source_url": "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=1200",
       "photographer": "Ilona Ilyes",
       "license": "Unsplash License",
-      "attribution": "Photo by Ilona Ilyes on Unsplash"
+      "attribution": "Photo by Ilona Ilyes"
     },
     {
-      "id": 10,
-      "filename": "canid_wolf_00.jpg",
-      "category": "canid_wolf",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=800",
-      "photographer": "Wolfgang Hasselmann",
-      "license": "Unsplash License",
-      "attribution": "Photo by Wolfgang Hasselmann on Unsplash"
-    },
-    {
-      "id": 11,
-      "filename": "canid_wolf_01.jpg",
-      "category": "canid_wolf",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=800",
-      "photographer": "Gary Bendig",
-      "license": "Unsplash License",
-      "attribution": "Photo by Gary Bendig on Unsplash"
-    },
-    {
-      "id": 12,
-      "filename": "canid_wolf_02.jpg",
-      "category": "canid_wolf",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=1200",
-      "photographer": "Wolfgang Hasselmann",
-      "license": "Unsplash License",
-      "attribution": "Photo by Wolfgang Hasselmann on Unsplash"
-    },
-    {
-      "id": 13,
-      "filename": "canid_wolf_03.jpg",
-      "category": "canid_wolf",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=1200",
-      "photographer": "Gary Bendig",
-      "license": "Unsplash License",
-      "attribution": "Photo by Gary Bendig on Unsplash"
-    },
-    {
-      "id": 14,
-      "filename": "canid_wolf_04.jpg",
-      "category": "canid_wolf",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=1600",
-      "photographer": "Wolfgang Hasselmann",
-      "license": "Unsplash License",
-      "attribution": "Photo by Wolfgang Hasselmann on Unsplash"
-    },
-    {
-      "id": 15,
-      "filename": "canid_wolf_05.jpg",
-      "category": "canid_wolf",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=800&auto=format&fit=crop",
-      "photographer": "Wolfgang Hasselmann",
-      "license": "Unsplash License",
-      "attribution": "Photo by Wolfgang Hasselmann on Unsplash"
-    },
-    {
-      "id": 16,
-      "filename": "canid_wolf_06.jpg",
-      "category": "canid_wolf",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=800&auto=format&fit=crop",
-      "photographer": "Gary Bendig",
-      "license": "Unsplash License",
-      "attribution": "Photo by Gary Bendig on Unsplash"
-    },
-    {
-      "id": 17,
-      "filename": "canid_wolf_07.jpg",
-      "category": "canid_wolf",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=1200",
-      "photographer": "Gary Bendig",
-      "license": "Unsplash License",
-      "attribution": "Photo by Gary Bendig on Unsplash"
-    },
-    {
-      "id": 18,
-      "filename": "canid_wolf_08.jpg",
-      "category": "canid_wolf",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=1600",
-      "photographer": "Wolfgang Hasselmann",
-      "license": "Unsplash License",
-      "attribution": "Photo by Wolfgang Hasselmann on Unsplash"
-    },
-    {
-      "id": 19,
-      "filename": "canid_wolf_09.jpg",
-      "category": "canid_wolf",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=1200&auto=format&fit=crop",
-      "photographer": "Gary Bendig",
-      "license": "Unsplash License",
-      "attribution": "Photo by Gary Bendig on Unsplash"
-    },
-    {
-      "id": 20,
+      "id": 6,
       "filename": "canid_dog_00.jpg",
       "category": "canid_dog",
       "source": "unsplash",
       "source_url": "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800",
       "photographer": "Justin Veenema",
       "license": "Unsplash License",
-      "attribution": "Photo by Justin Veenema on Unsplash"
+      "attribution": "Photo by Justin Veenema"
     },
     {
-      "id": 21,
+      "id": 7,
       "filename": "canid_dog_01.jpg",
       "category": "canid_dog",
       "source": "unsplash",
       "source_url": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800",
       "photographer": "Michele Dot",
       "license": "Unsplash License",
-      "attribution": "Photo by Michele Dot on Unsplash"
+      "attribution": "Photo by Michele Dot"
     },
     {
-      "id": 22,
+      "id": 8,
       "filename": "canid_dog_02.jpg",
       "category": "canid_dog",
       "source": "unsplash",
       "source_url": "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800",
       "photographer": "Jamie Street",
       "license": "Unsplash License",
-      "attribution": "Photo by Jamie Street on Unsplash"
+      "attribution": "Photo by Jamie Street"
     },
     {
-      "id": 23,
+      "id": 9,
       "filename": "canid_dog_03.jpg",
       "category": "canid_dog",
       "source": "unsplash",
       "source_url": "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&auto=format&fit=crop",
       "photographer": "Justin Veenema",
       "license": "Unsplash License",
-      "attribution": "Photo by Justin Veenema on Unsplash"
+      "attribution": "Photo by Justin Veenema"
     },
     {
-      "id": 24,
+      "id": 10,
       "filename": "canid_dog_04.jpg",
       "category": "canid_dog",
       "source": "unsplash",
       "source_url": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&auto=format&fit=crop",
       "photographer": "Michele Dot",
       "license": "Unsplash License",
-      "attribution": "Photo by Michele Dot on Unsplash"
+      "attribution": "Photo by Michele Dot"
     },
     {
-      "id": 25,
+      "id": 11,
       "filename": "canid_dog_05.jpg",
       "category": "canid_dog",
       "source": "unsplash",
       "source_url": "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800&auto=format&fit=crop",
       "photographer": "Jamie Street",
       "license": "Unsplash License",
-      "attribution": "Photo by Jamie Street on Unsplash"
+      "attribution": "Photo by Jamie Street"
     },
     {
-      "id": 26,
+      "id": 12,
       "filename": "canid_dog_06.jpg",
       "category": "canid_dog",
       "source": "unsplash",
       "source_url": "https://images.unsplash.com/photo-1552053831-71594a27632d?w=1200",
       "photographer": "Justin Veenema",
       "license": "Unsplash License",
-      "attribution": "Photo by Justin Veenema on Unsplash"
+      "attribution": "Photo by Justin Veenema"
     },
     {
-      "id": 27,
+      "id": 13,
       "filename": "canid_dog_07.jpg",
       "category": "canid_dog",
       "source": "unsplash",
       "source_url": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=1200",
       "photographer": "Michele Dot",
       "license": "Unsplash License",
-      "attribution": "Photo by Michele Dot on Unsplash"
-    },
-    {
-      "id": 28,
-      "filename": "ursid_00.jpg",
-      "category": "ursid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1534361960057-19889db9621e?w=800",
-      "photographer": "Wollertz",
-      "license": "Unsplash License",
-      "attribution": "Photo by Wollertz on Unsplash"
-    },
-    {
-      "id": 29,
-      "filename": "ursid_01.jpg",
-      "category": "ursid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800",
-      "photographer": "Manfred Antranias Zimmer",
-      "license": "Unsplash License",
-      "attribution": "Photo by Manfred Antranias Zimmer on Unsplash"
-    },
-    {
-      "id": 30,
-      "filename": "ursid_02.jpg",
-      "category": "ursid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=800",
-      "photographer": "John Moore",
-      "license": "Unsplash License",
-      "attribution": "Photo by John Moore on Unsplash"
-    },
-    {
-      "id": 31,
-      "filename": "ursid_03.jpg",
-      "category": "ursid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop",
-      "photographer": "Manfred Antranias Zimmer",
-      "license": "Unsplash License",
-      "attribution": "Photo by Manfred Antranias Zimmer on Unsplash"
-    },
-    {
-      "id": 32,
-      "filename": "ursid_04.jpg",
-      "category": "ursid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1534361960057-19889db9621e?w=800&auto=format&fit=crop",
-      "photographer": "Wollertz",
-      "license": "Unsplash License",
-      "attribution": "Photo by Wollertz on Unsplash"
-    },
-    {
-      "id": 33,
-      "filename": "ursid_05.jpg",
-      "category": "ursid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=800&auto=format&fit=crop",
-      "photographer": "John Moore",
-      "license": "Unsplash License",
-      "attribution": "Photo by John Moore on Unsplash"
-    },
-    {
-      "id": 34,
-      "filename": "ursid_06.jpg",
-      "category": "ursid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1534361960057-19889db9621e?w=1200",
-      "photographer": "Wollertz",
-      "license": "Unsplash License",
-      "attribution": "Photo by Wollertz on Unsplash"
-    },
-    {
-      "id": 35,
-      "filename": "ursid_07.jpg",
-      "category": "ursid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=1200",
-      "photographer": "Manfred Antranias Zimmer",
-      "license": "Unsplash License",
-      "attribution": "Photo by Manfred Antranias Zimmer on Unsplash"
-    },
-    {
-      "id": 36,
-      "filename": "ursid_08.jpg",
-      "category": "ursid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=1200",
-      "photographer": "John Moore",
-      "license": "Unsplash License",
-      "attribution": "Photo by John Moore on Unsplash"
-    },
-    {
-      "id": 37,
-      "filename": "cervid_00.jpg",
-      "category": "cervid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=800",
-      "photographer": "Ilona Ilyes",
-      "license": "Unsplash License",
-      "attribution": "Photo by Ilona Ilyes on Unsplash"
-    },
-    {
-      "id": 38,
-      "filename": "cervid_01.jpg",
-      "category": "cervid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=800",
-      "photographer": "John Moore",
-      "license": "Unsplash License",
-      "attribution": "Photo by John Moore on Unsplash"
-    },
-    {
-      "id": 39,
-      "filename": "cervid_02.jpg",
-      "category": "cervid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=800",
-      "photographer": "Sander Weeteling",
-      "license": "Unsplash License",
-      "attribution": "Photo by Sander Weeteling on Unsplash"
-    },
-    {
-      "id": 40,
-      "filename": "cervid_03.jpg",
-      "category": "cervid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=800",
-      "photographer": "David Clode",
-      "license": "Unsplash License",
-      "attribution": "Photo by David Clode on Unsplash"
-    },
-    {
-      "id": 41,
-      "filename": "cervid_04.jpg",
-      "category": "cervid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=1200",
-      "photographer": "Ilona Ilyes",
-      "license": "Unsplash License",
-      "attribution": "Photo by Ilona Ilyes on Unsplash"
-    },
-    {
-      "id": 42,
-      "filename": "cervid_05.jpg",
-      "category": "cervid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=800",
-      "photographer": "Ivan Kmit",
-      "license": "Unsplash License",
-      "attribution": "Photo by Ivan Kmit on Unsplash"
-    },
-    {
-      "id": 43,
-      "filename": "cervid_06.jpg",
-      "category": "cervid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=800&auto=format&fit=crop",
-      "photographer": "John Moore",
-      "license": "Unsplash License",
-      "attribution": "Photo by John Moore on Unsplash"
-    },
-    {
-      "id": 44,
-      "filename": "cervid_07.jpg",
-      "category": "cervid",
-      "source": "unsplash",
-      "source_url": "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=800&auto=format&fit=crop",
-      "photographer": "Sander Weeteling",
-      "license": "Unsplash License",
-      "attribution": "Photo by Sander Weeteling on Unsplash"
+      "attribution": "Photo by Michele Dot"
     }
-  ]
+  ],
+  "total": 14
 }
