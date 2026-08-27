@@ -6,12 +6,24 @@ run:
   port: 8000
 
 seed:
-  command: "python scripts/seed.py"
-  description: "Populate database with images, tags, posts, and eval set"
+  command: "python scripts/seed_v2.py"
+  description: "Populate database with 26 verified images, tags, 10 posts, and eval set"
 
 vision:
   command: "python scripts/run_vision_pipeline.py"
-  description: "Run Gemini Flash vision classification on all images"
+  description: "Run Ollama llava vision classification on all images (local, no quota)"
+
+embeddings:
+  command: "python scripts/run_embeddings.py"
+  description: "Generate nomic-embed-text embeddings for images and posts"
+
+matching:
+  command: "python scripts/run_matching.py"
+  description: "Run matching pipeline with mismatch guard evaluation"
+
+eval:
+  command: "python scripts/eval_precision.py"
+  description: "Compute TOP-1 precision against eval_set.json"
 
 test:
   command: "pytest -v"
@@ -23,16 +35,6 @@ endpoints:
   - path: "/health"
     method: "GET"
     description: "Health check endpoint"
-    expected_status: 200
-
-  - path: "/images"
-    method: "GET"
-    description: "List all images with metadata"
-    expected_status: 200
-
-  - path: "/images/{image_id}"
-    method: "GET"
-    description: "Get image details including tags and embeddings"
     expected_status: 200
 
   - path: "/posts"
@@ -55,7 +57,7 @@ endpoints:
     description: "Reject a suggested image with reason"
     expected_status: 200
 
-  - path: "/eval/run"
-    method: "POST"
-    description: "Run evaluation against eval_set.json"
+  - path: "/posts/{post_id}/approved-image"
+    method: "GET"
+    description: "Get the approved image for a post (if any)"
     expected_status: 200

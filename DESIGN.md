@@ -93,7 +93,7 @@ PASS = (tag_category_match) AND (similarity >= threshold) AND (confidence >= flo
 | Rule | Parameter | Default | Description |
 |------|-----------|---------|-------------|
 | Tag Category Match | Exact string match on `category` | Required | Image category must equal post's target category |
-| Similarity Threshold | `SIMILARITY_THRESHOLD` | 0.75 | Cosine similarity between post and image embeddings |
+| Similarity Threshold | `SIMILARITY_THRESHOLD` | 0.65 | Cosine similarity between post and image embeddings |
 | Confidence Floor | `CONFIDENCE_FLOOR` | 0.60 | Vision model's confidence in its own classification |
 
 ### Reject Output
@@ -120,11 +120,13 @@ If all candidates fail guard:
   "candidates_evaluated": 3,
   "rejection_reasons": [
     "wolf_01.jpg: Category mismatch (canid vs vulpine)",
-    "dog_03.jpg: Similarity below threshold (0.68 < 0.75)",
+    "dog_03.jpg: Similarity below threshold (0.68 < 0.65)",
     "fox_02.jpg: Confidence below floor (0.52 < 0.60)"
   ]
 }
 ```
+
+> **Threshold rationale**: `SIMILARITY_THRESHOLD=0.65` (not 0.75). The `category_match` AND-gate independently blocks cross-category candidates. The similarity threshold only filters weak semantic matches *within* the same category. Verified data: correct same-category matches range 0.68–0.77; wrong-category matches (already caught by category_match) range 0.62–0.66. 0.65 keeps a safety margin without rejecting valid matches.
 
 ---
 

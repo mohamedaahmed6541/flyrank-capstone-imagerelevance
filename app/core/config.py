@@ -32,10 +32,16 @@ class Settings(BaseSettings):
     APP_ENV: str = Field(default="development")
     LOG_LEVEL: str = Field(default="INFO")
     EMBEDDING_DIM: int = Field(default=768)
-    SIMILARITY_THRESHOLD: float = Field(default=0.75)
+    SIMILARITY_THRESHOLD: float = Field(default=0.65)
     CONFIDENCE_FLOOR: float = Field(default=0.60)
     DEFAULT_PAGE_SIZE: int = Field(default=20)
     MAX_PAGE_SIZE: int = Field(default=100)
+    
+    # Ollama Embedding Model
+    OLLAMA_EMBEDDING_MODEL: str = Field(
+        default="nomic-embed-text",
+        description="Ollama embedding model name"
+    )
 
     class Config:
         env_file = ".env"

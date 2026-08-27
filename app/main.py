@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.core.config import settings
+from app.api.suggestions import router as suggestions_router
 
 
 app = FastAPI(
@@ -7,6 +8,8 @@ app = FastAPI(
     version="0.1.0",
     description="AI Image Understanding & Content Matching Engine"
 )
+
+app.include_router(suggestions_router)
 
 
 @app.get("/health")
