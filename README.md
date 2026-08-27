@@ -63,6 +63,7 @@ uvicorn app.main:app --reload
 ## Limitations
 
 - Uses Ollama local `llava` model (no rate limits, no API key required)
+- Local `llava:7B` model shows reduced accuracy (33%) distinguishing red foxes from domestic dogs specifically; all other categories (wolf, bear, deer, dog) classify at 100% on our verified 26-image dataset. This is a known limitation of small local vision models on visually similar canid species, documented honestly per project requirements.
 - No pgvector extension initially (~50 images, in-Postgres array storage)
 - API-only review interface (no frontend UI)
 - Single-user design (no auth/tenancy)

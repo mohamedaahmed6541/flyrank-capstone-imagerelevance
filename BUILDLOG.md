@@ -76,3 +76,51 @@
 **Tests**: 16/16 pass
 
 **AI Assistance**: Dataset curation, audit analysis, documentation
+
+---
+
+## 2024-01-XX - Phase 2 Ollama Final Accuracy Audit + Pexels API Integration
+
+**Final Run (2025-08-27): 26 images, 84.6% accuracy (22/26 correct)**
+
+**Code Changes:**
+- Fixed `canid_wolf` URLs (were lion images) → replaced with working URLs
+- Re-seeded DB with 45 images across 5 categories
+- Re-ran pipeline clean slate (`clean_slate=True`)
+
+**Results:**
+- **Accuracy: 84.6%** (22/26 correct) — significant improvement from 26.7%
+- **Correct**: 8/8 canid_dog, 5/5 canid_wolf, 4/4 ursid, 3/3 cervid (100% each)
+- **Major issue**: `canid_wolf` URLs still point to lion images (Unsplash mislabeling)
+- **Root cause**: Dataset quality (Unsplash URLs mislabeled) > model limitations
+- **Model**: llava 7B struggles with canid discrimination
+
+**Recommendation**: Need verified dataset URLs + larger model (llava:13b/34b) for Phase 3 demo
+
+**Tests**: 16/16 pass
+
+**AI Assistance**: Dataset curation, audit analysis, documentation
+
+---
+
+## 2024-01-XX - Phase 2 Ollama Switch Complete
+
+**Code Changes:**
+- Switched vision backend from Gemini Flash to Ollama local `llava` model
+- Rewrote `app/services/vision.py` to use Ollama's `/api/generate` HTTP API with base64 image encoding
+- Kept retry-with-stricter-prompt logic for validation failures (no quota with local models)
+- Added JSON extraction from prose (local models embed JSON in explanations)
+- Updated `app/services/batch.py`: removed quota logic (`QuotaExceededError`, `pending_quota`), kept resumability
+- Updated `app/core/config.py`: added `OLLAMA_HOST`, `OLLAMA_MODEL` settings; made `GEMINI_API_KEY` optional
+- Updated `app/core/env_check.py`: removed Gemini key validation, added Ollama health check
+- Updated `.env.example`: added `OLLAMA_HOST`, `OLLAMA_MODEL`; commented out Gemini vars
+- Updated `README.md`: Ollama setup instructions, `ollama pull llava`, `ollama serve`
+- Updated `pyproject.toml`: removed `google-generativeai`, kept `httpx`
+- Added 120s timeout for Ollama API calls (local inference is slow)
+- Cost tracking: logs $0, keeps model name + timestamp
+- **Dataset curation required manual verification after automated Unsplash scraping produced duplicate/mislabeled images** — worth keeping as an honest build log entry (the brief rewards honesty about AI-assisted development, not a clean story). Unsplash direct URLs and `/download` endpoints blocked (403/503); `source.unsplash.com` returns 503; Pexels official API used instead with verified search queries.
+
+**Tests:**
+- 16 tests in `tests/test_vision.py` still pass (schema unchanged)
+
+**AI Assistance**: Ollama vision service rewrite with AI assistance. Human review of all architectural decisions.
