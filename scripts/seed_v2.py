@@ -18,7 +18,7 @@ from app.models.api_call import ApiCall
 
 
 DATA_DIR = Path(__file__).parent.parent / "data"
-MANIFEST_PATH = DATA_DIR / "manifest_v2.json"
+MANIFEST_PATH = DATA_DIR / "manifest_v3.json"
 POSTS_PATH = DATA_DIR / "posts.json"
 EVAL_SET_PATH = DATA_DIR / "eval_set.json"
 

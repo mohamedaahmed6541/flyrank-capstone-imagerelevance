@@ -19,6 +19,12 @@ class Settings(BaseSettings):
         description="Google AI Studio API key for Gemini Flash (optional)"
     )
 
+    # Pexels API Key (for fetching verified images)
+    PEXELS_API_KEY: str | None = Field(
+        default=None,
+        description="Pexels API key for fetching verified images"
+    )
+
     DATABASE_URL: str = Field(
         default="postgresql+asyncpg://postgres:postgres@localhost:5432/flyrank",
         description="PostgreSQL connection URL"
