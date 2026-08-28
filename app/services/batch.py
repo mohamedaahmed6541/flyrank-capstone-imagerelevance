@@ -166,6 +166,11 @@ def run_vision_batch(
     
     logger.info(f"Starting vision batch processing for {stats.total} images (sequential, local Ollama, clean_slate={clean_slate})")
     
+    if clean_slate:
+        logger.info("clean_slate=True: processing ALL images (including already successful ones)")
+    else:
+        logger.info("clean_slate=False: skipping images already marked success/partial")
+    
     # Get existing images from DB to match by filename
     with get_session() as session:
         existing_images = {img.filename: img.id for img in session.query(Image).all()}
